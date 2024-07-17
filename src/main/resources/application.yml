@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DB_URL:jdbc:mysql://localhost:3306/kopring}
+    username: dev
+    password: 10041004
+  jpa:
+    properties:
+      hibernate:
+        ddl-auto: update
+    show-sql: true
+    generate-ddl: true
+
+jwt :
+  access :
+    key : 9a1c7805bb074f31f9b36fa510d0c743a557aa44f9b5b1cd6dbb7f8905b067c8
+    validtime : 604800000 #7일
