@@ -3,6 +3,7 @@ package com.example.kopring.security.config
 import com.example.kopring.security.filter.TokenAuthenticationFilter
 import com.example.kopring.security.handler.AuthenticationEntryPointHandler
 import com.example.kopring.security.handler.TokenAccessDeniedHandler
+import com.example.kopring.security.repository.OAuth2AuthorizationRequestBasedOnCookieRepository
 import com.example.kopring.security.service.UserDetailService
 import com.example.kopring.security.token.AuthTokenProvider
 import org.springframework.context.annotation.Bean
@@ -47,6 +48,22 @@ class SecurityConfig (
                 ex.accessDeniedHandler(tokenAccessDeniedHandler)
             }
             .userDetailsService(userDetailService)
+            .oauth2Login{ oauth2 ->
+                oauth2.authorizationEndpoint { authorizationEndpoint ->
+                    authorizationEndpoint.authorizationRequestRepository(oauth2AuthorizationRequestBasedOnCookieRepository())
+                    authorizationEndpoint.baseUri("/oauth2/authorization")
+                }
+                oauth2.redirectionEndpoint { redirectionEndpoint ->
+                    redirectionEndpoint.baseUri("/*/oauth2/code/*")
+                }
+                oauth2.userInfoEndpoint { userInfoEndpoint ->
+                    userInfoEndpoint.userService(oAuth2UserService)
+                }
+                oauth2.successHandler(oauth2AuthenticationSuccessHandler())
+                oauth2.failureHandler(oauth2AuthenticationFailureHandler())
+
+            }
+
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
 
 
@@ -63,4 +80,9 @@ class SecurityConfig (
     @Bean
     @Throws(Exception::class)
     fun authenticationManager(configuration: AuthenticationConfiguration): AuthenticationManager? = configuration.authenticationManager
+
+    @Bean
+    fun oauth2AuthorizationRequestBasedOnCookieRepository(): OAuth2AuthorizationRequestBasedOnCookieRepository {
+        return OAuth2AuthorizationRequestBasedOnCookieRepository()
+    }
 }

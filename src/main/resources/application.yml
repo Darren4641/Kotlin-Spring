@@ -1,4 +1,19 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          apple:
+            clientId: { 애플로부터 받은clientId }
+            clientSecret: { 애플로부터 받은 key 파일 }.p8
+            redirectUri: "${backend-rooturl-origin}/login/oauth2/code/apple"
+            authorizationGrantType: authorization_code
+            clientAuthenticationMethod: POST
+            clientName: Apple
+            scope:
+              - name
+              - email
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${DB_URL:jdbc:mysql://localhost:3306/kopring}
