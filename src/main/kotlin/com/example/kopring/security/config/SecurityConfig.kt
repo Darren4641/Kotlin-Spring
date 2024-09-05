@@ -48,21 +48,7 @@ class SecurityConfig (
                 ex.accessDeniedHandler(tokenAccessDeniedHandler)
             }
             .userDetailsService(userDetailService)
-            .oauth2Login{ oauth2 ->
-                oauth2.authorizationEndpoint { authorizationEndpoint ->
-                    authorizationEndpoint.authorizationRequestRepository(oauth2AuthorizationRequestBasedOnCookieRepository())
-                    authorizationEndpoint.baseUri("/oauth2/authorization")
-                }
-                oauth2.redirectionEndpoint { redirectionEndpoint ->
-                    redirectionEndpoint.baseUri("/*/oauth2/code/*")
-                }
-                oauth2.userInfoEndpoint { userInfoEndpoint ->
-                    userInfoEndpoint.userService(oAuth2UserService)
-                }
-                oauth2.successHandler(oauth2AuthenticationSuccessHandler())
-                oauth2.failureHandler(oauth2AuthenticationFailureHandler())
 
-            }
 
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
 
