@@ -1,11 +1,16 @@
 package com.example.kopring.security.config
 
+import com.dopaminedefense.dodiserver.security.converter.CustomRequestEntityConverter
+import com.example.kopring.common.config.AppProperties
 import com.example.kopring.security.filter.TokenAuthenticationFilter
 import com.example.kopring.security.handler.AuthenticationEntryPointHandler
+import com.example.kopring.security.handler.OAuth2AuthenticationSuccessHandler
 import com.example.kopring.security.handler.TokenAccessDeniedHandler
 import com.example.kopring.security.repository.OAuth2AuthorizationRequestBasedOnCookieRepository
+import com.example.kopring.security.service.OAuth2UserService
 import com.example.kopring.security.service.UserDetailService
 import com.example.kopring.security.token.AuthTokenProvider
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -14,6 +19,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient
+import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient
+import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
@@ -21,10 +29,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 class SecurityConfig (
-    private val tokenProvider: AuthTokenProvider,
+    private val authTokenProvider: AuthTokenProvider,
+    private val appProperties: AppProperties,
     private val userDetailService: UserDetailService,
+    private val oAuth2UserService: OAuth2UserService,
     private val authenticationEntryPointHandler: AuthenticationEntryPointHandler,
-    private val tokenAccessDeniedHandler: TokenAccessDeniedHandler
+    private val tokenAccessDeniedHandler: TokenAccessDeniedHandler,
+    @Value("\${key.file.path}")
+    val keyFilePath: String
 ) {
 
     @Bean
@@ -41,14 +53,31 @@ class SecurityConfig (
             .formLogin{ formLogin -> formLogin.disable() }
             .httpBasic{ httpBasic -> httpBasic.disable() }
             .exceptionHandling{
-                ex ->
+                    ex ->
                 //인증 되지 않은 사용자 접근시 핸들러 -401
                 ex.authenticationEntryPoint(authenticationEntryPointHandler)
                 //인증은 되었으나, 권한이 없는경우 - 403
                 ex.accessDeniedHandler(tokenAccessDeniedHandler)
             }
             .userDetailsService(userDetailService)
+            .oauth2Login{ oauth2 ->
+                oauth2.tokenEndpoint { tokenEndpoint ->
+                    tokenEndpoint.accessTokenResponseClient(accessTokenResponseClient())
+                }
+                oauth2.authorizationEndpoint { authorizationEndpoint ->
+                    authorizationEndpoint.authorizationRequestRepository(oauth2AuthorizationRequestBasedOnCookieRepository())
+                    authorizationEndpoint.baseUri("/oauth2/authorization")
+                }
+                oauth2.redirectionEndpoint { redirectionEndpoint ->
+                    redirectionEndpoint.baseUri("/*/oauth2/code/*")
+                }
+                oauth2.userInfoEndpoint { userInfoEndpoint ->
+                    userInfoEndpoint.userService(oAuth2UserService)
+                }
+                oauth2.successHandler(oauth2AuthenticationSuccessHandler())
+//                oauth2.failureHandler(oauth2AuthenticationFailureHandler())
 
+            }
 
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter::class.java)
 
@@ -61,7 +90,7 @@ class SecurityConfig (
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun tokenAuthenticationFilter(): TokenAuthenticationFilter = TokenAuthenticationFilter(tokenProvider)
+    fun tokenAuthenticationFilter(): TokenAuthenticationFilter = TokenAuthenticationFilter(authTokenProvider)
 
     @Bean
     @Throws(Exception::class)
@@ -70,5 +99,21 @@ class SecurityConfig (
     @Bean
     fun oauth2AuthorizationRequestBasedOnCookieRepository(): OAuth2AuthorizationRequestBasedOnCookieRepository {
         return OAuth2AuthorizationRequestBasedOnCookieRepository()
+    }
+
+    @Bean
+    fun accessTokenResponseClient() : OAuth2AccessTokenResponseClient<OAuth2AuthorizationCodeGrantRequest> {
+        val accessTokenResponseClient = DefaultAuthorizationCodeTokenResponseClient()
+        accessTokenResponseClient.setRequestEntityConverter(CustomRequestEntityConverter(keyFilePath))
+        return accessTokenResponseClient
+    }
+
+    @Bean
+    fun oauth2AuthenticationSuccessHandler() : OAuth2AuthenticationSuccessHandler {
+        return OAuth2AuthenticationSuccessHandler(
+            authTokenProvider = authTokenProvider,
+            appProperties = appProperties,
+            authorizationRequestRepository = oauth2AuthorizationRequestBasedOnCookieRepository()
+        )
     }
 }

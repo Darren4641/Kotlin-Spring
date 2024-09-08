@@ -11,6 +11,7 @@ enum class ResultCode (
     MEMBER_ALREADY("D-100", "이미 회원가입된 계정입니다."),
     INVALID_MEMBER_INFO("D-101", "ID/PW 가 올바르지 않습니다."),
 
+    ILLEGAL_REDIRECT_URL_ERROR("D-994", "Redirect URL 경로가 잘못되었습니다."),
     ILLEGAL_TOKEN_ERROR("D-995", "토큰이 만료되었습니다."),
     UNSUPPORTED_TOKEN_ERROR("D-996", "토큰이 만료되었습니다."),
     EXPIRED_TOKEN_ERROR("D-997", "토큰이 만료되었습니다."),

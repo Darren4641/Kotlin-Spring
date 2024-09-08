@@ -24,10 +24,10 @@ class Member (
     var password : String,
 
     @Column(name = "name", nullable = false, length = 320)
-    var name : String,
+    var name : String? = null,
 
     @Column(name = "birth", nullable = false, length = 10)
-    var birth : String,
+    var birth : String? = null,
 
     @Column(name = "role", nullable = false, length = 255)
     var roles : String
@@ -43,7 +43,15 @@ class Member (
         roles = RoleType.USER.role
     )
 
-    constructor(email: String, password : String, name: String, birth: String) : this (
+    constructor(email: String, password : String, name: String) : this (
+        id = UUID.randomUUID().toString(),
+        email = email,
+        password = password,
+        name = name,
+        roles = RoleType.USER.role
+    )
+
+    constructor(email: String, password : String, name: String, birth: String?) : this (
         id = UUID.randomUUID().toString(),
         email = email,
         password = password,
@@ -52,4 +60,7 @@ class Member (
         roles = RoleType.USER.role
     )
 
+    fun signIn() {
+        //TODO LoginDateUpdate
+    }
 }

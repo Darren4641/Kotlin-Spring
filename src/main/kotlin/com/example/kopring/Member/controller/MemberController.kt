@@ -50,7 +50,7 @@ class MemberController(
 
         val token = tokenProvider.createToken(
             id = memberLoginReq.email,
-            roles = (authentication.principal as UserPrincipal).authorities)
+            roles = (authentication.principal as UserPrincipal).authorities.map { it.authority }.toMutableList())
         return BaseResponse(data = MemberLoginRes(token, "JWT"))
     }
 

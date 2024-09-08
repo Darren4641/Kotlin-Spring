@@ -1,12 +1,19 @@
 package com.example.kopring.Member.dto
 
 import com.example.kopring.Member.entity.Member
+import com.example.kopring.security.RoleType
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.LocalDateTime
+import java.util.UUID
+
+enum class UserStatus {
+    ACTIVE,
+    DELETE
+}
 
 data class MemberSignupReq (
     @field:NotBlank
@@ -24,9 +31,9 @@ data class MemberSignupReq (
 ) {
     constructor(member : Member) : this (
         email = member.email,
-        name = member.name,
+        name = member.name!!,
         password = member.password,
-        birth = member.birth
+        birth = member.birth!!
     )
 
     fun toServiceDto() : MemberSignupReqService {
@@ -42,7 +49,7 @@ data class MemberSignupReqService (
     val email : String,
     val password : String,
     val name : String,
-    val birth : String
+    val birth : String? = null
 ) {
     constructor(memberSignupReq : MemberSignupReq) : this (
         email = memberSignupReq.email,
@@ -52,7 +59,12 @@ data class MemberSignupReqService (
     )
 
     fun toEntity() : Member {
-        return Member(email, password, name, birth)
+        return Member(
+            email = email,
+            password = password,
+            name = name,
+            birth = birth
+        )
     }
 }
 
@@ -67,8 +79,8 @@ data class MemberSignRes (
     constructor(member : Member) : this (
         id = member.id,
         email = member.email,
-        name = member.name,
-        birth = member.birth,
+        name = member.name!!,
+        birth = member.birth!!,
         createdDate = member.createdDate,
         updatedDate = member.updatedDate
     )

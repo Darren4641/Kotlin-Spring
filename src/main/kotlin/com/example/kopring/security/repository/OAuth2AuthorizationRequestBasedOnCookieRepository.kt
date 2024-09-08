@@ -68,7 +68,7 @@ class OAuth2AuthorizationRequestBasedOnCookieRepository() : AuthorizationRequest
         }
     }
 
-    private fun removeAuthorizationRequestCookies(name: String, response: HttpServletResponse) {
+    fun removeAuthorizationRequestCookies(name: String, response: HttpServletResponse) {
         val cookie = Cookie(name, "")
         cookie.maxAge = 0
         cookie.path = "/"

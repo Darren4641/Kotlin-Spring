@@ -1,5 +1,6 @@
 package com.example.kopring.security.token
 
+import com.example.kopring.common.config.AppProperties
 import com.example.kopring.security.RoleType
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts
@@ -19,17 +20,14 @@ import javax.crypto.spec.SecretKeySpec
 
 @Component
 class AuthTokenProvider (
-    @Value("\${jwt.access.key}")
-    private val key : String,
-    @Value("\${jwt.access.validtime}")
-    private val accessTokenValidTime : Long,
+    private val appProperties: AppProperties,
 ) {
 
     companion object {
         private const val AUTHORITIES_KEY : String = "roles"
     }
 
-    private val secretKey : SecretKey by lazy { SecretKeySpec(key.toByteArray(), 0, key.toByteArray().size, "HmacSHA256") }
+    private val secretKey : SecretKey by lazy { SecretKeySpec(appProperties.auth.tokenSecret!!.toByteArray(), 0, appProperties.auth.tokenSecret!!.toByteArray().size, "HmacSHA256") }
 
     fun createToken(id : String) : String {
         val now = Date()
@@ -37,17 +35,17 @@ class AuthTokenProvider (
             .setSubject(id)
             .claim(AUTHORITIES_KEY, listOf(RoleType.USER.role))
             .signWith(secretKey, SignatureAlgorithm.HS256)
-            .setExpiration(Date(now.time + accessTokenValidTime))
+            .setExpiration(Date(now.time + appProperties.auth.tokenExpiry))
             .compact()
     }
 
-    fun createToken(id: String, roles: MutableCollection<out GrantedAuthority>) : String {
+    fun createToken(id: String, roles: MutableCollection<String>) : String {
         val now = Date()
         return Jwts.builder()
             .setSubject(id)
             .claim(AUTHORITIES_KEY, roles)
             .signWith(secretKey, SignatureAlgorithm.HS256)
-            .setExpiration(Date(now.time + accessTokenValidTime))
+            .setExpiration(Date(now.time + appProperties.auth.tokenExpiry))
             .compact()
     }
 

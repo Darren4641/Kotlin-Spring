@@ -4,15 +4,19 @@ spring:
       client:
         registration:
           apple:
-            clientId: { 애플로부터 받은clientId }
-            clientSecret: { 애플로부터 받은 key 파일 }.p8
-            redirectUri: "${backend-rooturl-origin}/login/oauth2/code/apple"
-            authorizationGrantType: authorization_code
+            client-id: 'Apple에서 생성한 Service ID'
+            client-secret: 'Apple에서 생성한 Secret'
+            authorization-grant-type: authorization_code
+            redirect-uri: "https://도메인/login/oauth2/code/apple"  # 애플 로그인 후 리디렉션 URL
             clientAuthenticationMethod: POST
             clientName: Apple
             scope:
               - name
-              - email
+              - email              # Apple에서 요청할 권한 (email과 name)
+        provider:
+          apple:
+            authorizationUri: https://appleid.apple.com/auth/authorize?scope=name%20email&response_mode=form_post
+            tokenUri: https://appleid.apple.com/auth/token
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -26,7 +30,14 @@ spring:
     show-sql: true
     generate-ddl: true
 
-jwt :
-  access :
-    key : 9a1c7805bb074f31f9b36fa510d0c743a557aa44f9b5b1cd6dbb7f8905b067c8
-    validtime : 604800000 #7일
+app:
+  auth:
+    tokenSecret: 9a1c7805bb074f31f9b36fa510d0c743a557aa44f9b5b1cd6dbb7f8905b067c8
+    tokenExpiry: 7776000000 #3달
+  oauth2:
+    authorizedRedirectUris:
+      - https://도메인/login/oauth2/code/apple
+
+key:
+  file:
+    path: ${KEY_PATH:classpath:keyfiles/}
